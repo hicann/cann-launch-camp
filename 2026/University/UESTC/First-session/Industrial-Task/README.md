@@ -25,7 +25,7 @@ Industrial-Task/
 
 ## 提交流程
 
-详细操作步骤请参阅 [PR 提交指南](../PR-submission-guide.md)，简要流程：
+详细操作步骤请参阅 [PR 提交指南](../../PR-submission-guide.md)，简要流程：
 
 1. Fork 代码仓并克隆到本地
 2. 在本地创建个人提交目录

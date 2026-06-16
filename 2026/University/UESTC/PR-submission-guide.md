@@ -38,9 +38,9 @@ cd cann-launch-camp
 
 ## 🔄 四、同步上游仓库（可选）
 
-本步骤初次fork代码之后可不用操作，如果后续有代码冲突时可执行以下操作
+**本步骤初次fork代码之后可不用操作，如果后续合并代码时有冲突，需要执行以下操作，拉取最新的代码来解冲突**
 
-为确保本地代码与上游最新版本一致，可添加上游仓库为远程源：
+为确保本地代码与上游最新版本一致，添加上游仓库为远程源：
 
 ```bash
 git remote add upstream https://gitcode.com/cann/cann-launch-camp.git
@@ -61,8 +61,11 @@ git pull upstream master --rebase
 
 例如，账号 `zhangsan` 提交 `selu` 算子任务的成果：
 
+windows系统在`2026/University/UESTC/First-Session/Industrial-Task/`目录下直接创建文件夹`zhangsan_gitcode账号_gelu`
+
+linux系统可以执行以下命令创建文件夹
 ```bash
-mkdir -p 2026/University/UESTC/First-Session/Industrial-Task/zhangsan_gitcode账号_selu
+mkdir -p 2026/University/UESTC/First-Session/Industrial-Task/zhangsan_gitcode账号_gelu
 ```
 
 将您的代码及文档复制到该目录中，确保包含：
@@ -71,7 +74,10 @@ mkdir -p 2026/University/UESTC/First-Session/Industrial-Task/zhangsan_gitcode账
 - 配套说明文档（README）
 - 必要的构建或运行脚本
 
+windows系统直接复制，linux系统使用`cp -r`命令复制
+
 ## 📝 六、提交代码
+以下分为`首次提交`和`后续修改代码多次提交`的场景，
 
 ### 首次提交
 
@@ -87,13 +93,13 @@ git status
 
 ```bash
 # 添加指定目录下的所有文件
-git add 2026/University/UESTC/First-Session/Industrial-Task/zhangsan_gitcode账号_selu/
+git add 2026/University/UESTC/First-Session/Industrial-Task/zhangsan_gitcode账号_gelu/
 ```
 
 #### 提交变更
 
 ```bash
-git commit -m "feat(UESTC): 提交 selu 算子课题成果"
+git commit -m "feat(UESTC): 提交 gelu 算子课题成果"
 ```
 
 提交信息建议使用 `feat(UESTC): {简要描述}` 格式。
@@ -111,13 +117,13 @@ git push origin master
 #### 暂存追加修改
 
 ```bash
-git add 2026/University/UESTC/First-Session/Industrial-Task/zhangsan_gitcode账号_selu/
+git add 2026/University/UESTC/First-Session/Industrial-Task/zhangsan_gitcode账号_gelu/
 ```
 
 #### 追加到上一次提交
 
 ```bash
-git commit --amend -m "feat(UESTC): 提交 selu 算子课题成果"
+git commit --amend -m "feat(UESTC): 提交 gelu 算子课题成果"
 ```
 
 > 如果提交信息无需修改，可省略 `-m` 参数，直接使用 `git commit --amend` 保留原提交信息。
@@ -133,23 +139,12 @@ git push origin master --force
 ## 🔀 七、创建 Pull Request
 
 1. 推送成功后，浏览器访问您 Fork 的仓库页面：`https://gitcode.com/{您的用户名}/cann-launch-camp`
-2. 点击进入**Pull Request** 标签页；
+2. 点击进入 **Pull Request** 标签页；
 3. 在该标签页右上角有 **“+ 新建Pull Request”** 黑色按钮，点击进入；
-3. 确认源分支（您推送代码的分支，示例是master分支）和目标仓库（`cann/cann-launch-camp` master 分支），然后点击下一步。、；
-4. 填写 PR 标题和描述，建议格式：
-
-```
-## 标题
-feat(UESTC): 提交 selu 算子课题成果 - zhangsan
-
-## 描述
-- 实现了 selu 算子的 Ascend C 开发
-- 包含完整源码、使用文档及运行说明
-- 已通过本地精度验证
-```
-
-5. 点击 **Create Pull Request** 提交
-6. 等待社区审核，审核意见将通过 PR 评论反馈，请及时关注并响应
+4. 确认源分支（您推送代码的分支，示例是master分支）和目标仓库（`cann/cann-launch-camp` master 分支），然后点击下一步；
+5. 填写 PR 标题和描述，具体内容按照页面提示填写；
+6. 点击 **“创建”** 提交
+7. 等待社区审核，审核意见将通过 PR 评论反馈，请及时关注并响应
 
 ## ❓ 常见问题
 
@@ -160,4 +155,4 @@ A：请确认已在 CANN 社区完成 CLA 签署，签署指南见 [CLA 使用�
 A：审核人会提出修改建议，在本地修改后再次 commit 并 push，PR 会自动更新，无需重新创建。
 
 **Q：Fork 的仓库落后于上游仓库？**
-A：执行 `git pull upstream master` 同步上游最新代码，再推送至个人仓库。
+A：执行 `git pull upstream master --rebase` 同步上游最新代码，再推送至个人仓库。
