@@ -1,0 +1,22 @@
+%%writefile Sources/test/custom_op/op_kernel/log_sigmoid_custom_tiling.h
+#ifndef LOG_SIGMOID_CUSTOM_TILING_H
+#define LOG_SIGMOID_CUSTOM_TILING_H
+
+#include <cstdint>
+
+struct LogSigmoidCustomTilingData {
+    uint32_t totalDataNum;
+
+    uint32_t smallCoreDataNum;
+    uint32_t bigCoreDataNum;
+    uint32_t bigCoreNum;
+
+    uint32_t smallCoreTileNum;
+    uint32_t bigCoreTileNum;
+    uint32_t tileDataNum;
+
+    uint32_t smallCoreTailDataNum;
+    uint32_t bigCoreTailDataNum;
+};
+
+#endif  // LOG_SIGMOID_CUSTOM_TILING_H

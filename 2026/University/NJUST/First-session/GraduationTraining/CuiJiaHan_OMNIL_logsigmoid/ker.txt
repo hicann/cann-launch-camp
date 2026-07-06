@@ -1,0 +1,250 @@
+%%writefile Sources/test/custom_op/op_kernel/log_sigmoid_custom.cpp
+#include "kernel_operator.h"
+#include "log_sigmoid_custom_tiling.h"
+
+constexpr int32_t BUFFER_NUM = 1;
+
+__aicore__ inline void ConvertToFloat(AscendC::LocalTensor<float> dst,
+                                      AscendC::LocalTensor<float> src,
+                                      uint32_t len)
+{
+    AscendC::Adds(dst, src, 0.0f, len);
+}
+
+__aicore__ inline void ConvertToFloat(AscendC::LocalTensor<float> dst,
+                                      AscendC::LocalTensor<half> src,
+                                      uint32_t len)
+{
+    AscendC::Cast(dst, src, AscendC::RoundMode::CAST_NONE, len);
+}
+
+__aicore__ inline void ConvertToFloat(AscendC::LocalTensor<float> dst,
+                                      AscendC::LocalTensor<bfloat16_t> src,
+                                      uint32_t len)
+{
+    AscendC::Cast(dst, src, AscendC::RoundMode::CAST_NONE, len);
+}
+
+__aicore__ inline void ConvertFromFloat(AscendC::LocalTensor<float> dst,
+                                        AscendC::LocalTensor<float> src,
+                                        uint32_t len)
+{
+    AscendC::Adds(dst, src, 0.0f, len);
+}
+
+__aicore__ inline void ConvertFromFloat(AscendC::LocalTensor<half> dst,
+                                        AscendC::LocalTensor<float> src,
+                                        uint32_t len)
+{
+    AscendC::Cast(dst, src, AscendC::RoundMode::CAST_NONE, len);
+}
+
+__aicore__ inline void ConvertFromFloat(AscendC::LocalTensor<bfloat16_t> dst,
+                                        AscendC::LocalTensor<float> src,
+                                        uint32_t len)
+{
+    AscendC::Cast(dst, src, AscendC::RoundMode::CAST_RINT, len);
+}
+
+
+template <typename TYPE_X, typename TYPE_Y>
+class KernelLogSigmoidCustom {
+public:
+    __aicore__ inline KernelLogSigmoidCustom() {}
+
+    __aicore__ inline void Init(GM_ADDR x,
+                                GM_ADDR y,
+                                uint32_t totalDataNum,
+                                uint32_t smallCoreDataNum,
+                                uint32_t bigCoreDataNum,
+                                uint32_t bigCoreNum,
+                                uint32_t smallCoreTileNum,
+                                uint32_t bigCoreTileNum,
+                                uint32_t tileDataNum,
+                                uint32_t smallCoreTailDataNum,
+                                uint32_t bigCoreTailDataNum)
+    {
+        totalDataNum_ = totalDataNum;
+        tileDataNum_ = tileDataNum;
+
+        uint32_t coreIdx = AscendC::GetBlockIdx();
+
+        if (coreIdx < bigCoreNum) {
+            coreDataNum_ = bigCoreDataNum;
+            tileNum_ = bigCoreTileNum;
+            tailDataNum_ = bigCoreTailDataNum;
+            startOffset_ = coreIdx * bigCoreDataNum;
+        } else {
+            coreDataNum_ = smallCoreDataNum;
+            tileNum_ = smallCoreTileNum;
+            tailDataNum_ = smallCoreTailDataNum;
+            startOffset_ =
+                bigCoreNum * bigCoreDataNum +
+                (coreIdx - bigCoreNum) * smallCoreDataNum;
+        }
+
+        xGm_.SetGlobalBuffer((__gm__ TYPE_X*)x + startOffset_, coreDataNum_);
+        yGm_.SetGlobalBuffer((__gm__ TYPE_Y*)y + startOffset_, coreDataNum_);
+
+        pipe_.InitBuffer(inQueueX_, BUFFER_NUM, tileDataNum_ * sizeof(TYPE_X));
+        pipe_.InitBuffer(outQueueY_, BUFFER_NUM, tileDataNum_ * sizeof(TYPE_Y));
+
+        pipe_.InitBuffer(xFloatBuf_, tileDataNum_ * sizeof(float));
+        pipe_.InitBuffer(calcBuf_, tileDataNum_ * sizeof(float));
+    }
+
+    __aicore__ inline void Process()
+    {
+        if (startOffset_ >= totalDataNum_) {
+            return;
+        }
+
+        for (uint32_t tileIdx = 0; tileIdx < tileNum_; ++tileIdx) {
+            uint32_t plannedLen = tileDataNum_;
+            if (tileIdx == tileNum_ - 1) {
+                plannedLen = tailDataNum_;
+            }
+
+            uint32_t globalOffset = startOffset_ + tileIdx * tileDataNum_;
+            if (globalOffset >= totalDataNum_) {
+                break;
+            }
+
+            uint32_t validLen = plannedLen;
+            if (globalOffset + validLen > totalDataNum_) {
+                validLen = totalDataNum_ - globalOffset;
+            }
+
+            CopyIn(tileIdx, validLen);
+            Compute(validLen);
+            CopyOut(tileIdx, validLen);
+        }
+    }
+
+private:
+    __aicore__ inline void CopyIn(uint32_t tileIdx, uint32_t validLen)
+    {
+        AscendC::LocalTensor<TYPE_X> xLocal =
+            inQueueX_.AllocTensor<TYPE_X>();
+
+        AscendC::DataCopyExtParams copyParams{
+            1,
+            static_cast<uint32_t>(validLen * sizeof(TYPE_X)),
+            0,
+            0,
+            0
+        };
+
+        AscendC::DataCopyPadExtParams<TYPE_X> padParams{
+            false,
+            0,
+            0,
+            0
+        };
+
+        AscendC::DataCopyPad(
+            xLocal,
+            xGm_[tileIdx * tileDataNum_],
+            copyParams,
+            padParams);
+
+        inQueueX_.EnQue(xLocal);
+    }
+
+    __aicore__ inline void Compute(uint32_t validLen)
+    {
+        AscendC::LocalTensor<TYPE_X> xLocal =
+            inQueueX_.DeQue<TYPE_X>();
+
+        AscendC::LocalTensor<TYPE_Y> yLocal =
+            outQueueY_.AllocTensor<TYPE_Y>();
+
+        AscendC::LocalTensor<float> xFloat =
+            xFloatBuf_.Get<float>();
+
+        AscendC::LocalTensor<float> calc =
+            calcBuf_.Get<float>();
+
+        ConvertToFloat(xFloat, xLocal, validLen);
+
+        // LogSigmoid(x) = log(1 / (1 + exp(-x)))
+        //               = -ln(1 + exp(-x))
+        AscendC::Muls(calc, xFloat, -1.0f, validLen);
+        AscendC::Exp(calc, calc, validLen);
+        AscendC::Adds(calc, calc, 1.0f, validLen);
+        AscendC::Ln(calc, calc, validLen);
+        AscendC::Muls(calc, calc, -1.0f, validLen);
+
+        ConvertFromFloat(yLocal, calc, validLen);
+
+        outQueueY_.EnQue<TYPE_Y>(yLocal);
+        inQueueX_.FreeTensor(xLocal);
+    }
+
+    __aicore__ inline void CopyOut(uint32_t tileIdx, uint32_t validLen)
+    {
+        AscendC::LocalTensor<TYPE_Y> yLocal =
+            outQueueY_.DeQue<TYPE_Y>();
+
+        AscendC::DataCopyExtParams copyParams{
+            1,
+            static_cast<uint32_t>(validLen * sizeof(TYPE_Y)),
+            0,
+            0,
+            0
+        };
+
+        AscendC::DataCopyPad(
+            yGm_[tileIdx * tileDataNum_],
+            yLocal,
+            copyParams);
+
+        outQueueY_.FreeTensor(yLocal);
+    }
+
+private:
+    AscendC::TPipe pipe_;
+
+    AscendC::TQue<AscendC::TPosition::VECIN, BUFFER_NUM> inQueueX_;
+    AscendC::TQue<AscendC::TPosition::VECOUT, BUFFER_NUM> outQueueY_;
+
+    AscendC::TBuf<AscendC::TPosition::VECCALC> xFloatBuf_;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> calcBuf_;
+
+    AscendC::GlobalTensor<TYPE_X> xGm_;
+    AscendC::GlobalTensor<TYPE_Y> yGm_;
+
+    uint32_t totalDataNum_;
+    uint32_t startOffset_;
+    uint32_t coreDataNum_;
+    uint32_t tileNum_;
+    uint32_t tileDataNum_;
+    uint32_t tailDataNum_;
+};
+
+
+extern "C" __global__ __aicore__ void log_sigmoid_custom(
+    GM_ADDR x,
+    GM_ADDR y,
+    GM_ADDR workspace,
+    GM_ADDR tiling)
+{
+    REGISTER_TILING_DEFAULT(LogSigmoidCustomTilingData);
+    GET_TILING_DATA(tilingData, tiling);
+
+    KernelLogSigmoidCustom<DTYPE_X, DTYPE_Y> op;
+
+    op.Init(x,
+            y,
+            tilingData.totalDataNum,
+            tilingData.smallCoreDataNum,
+            tilingData.bigCoreDataNum,
+            tilingData.bigCoreNum,
+            tilingData.smallCoreTileNum,
+            tilingData.bigCoreTileNum,
+            tilingData.tileDataNum,
+            tilingData.smallCoreTailDataNum,
+            tilingData.bigCoreTailDataNum);
+
+    op.Process();
+}

@@ -1,0 +1,152 @@
+%%writefile Sources/test/custom_op/op_host/log_sigmoid_custom.cpp
+#include <algorithm>
+#include <cstdint>
+
+#include "../op_kernel/log_sigmoid_custom_tiling.h"
+#include "graph/utils/type_utils.h"
+#include "register/op_def_registry.h"
+#include "tiling/platform/platform_ascendc.h"
+
+namespace {
+constexpr uint32_t BLOCK_BYTES = 32;
+
+static uint32_t DivCeil(uint32_t x, uint32_t y)
+{
+    return (x + y - 1) / y;
+}
+
+static uint32_t RoundDown(uint32_t x, uint32_t base)
+{
+    return (x / base) * base;
+}
+}  // namespace
+
+
+namespace optiling {
+static ge::graphStatus TilingFunc(gert::TilingContext* context)
+{
+    auto platformInfo =
+        platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
+
+    uint32_t maxCoreNum = static_cast<uint32_t>(platformInfo.GetCoreNum());
+
+    uint32_t totalDataNum = static_cast<uint32_t>(
+        context->GetInputShape(0)->GetStorageShape().GetShapeSize());
+
+    uint32_t typeBytes = 0;
+    ge::TypeUtils::GetDataTypeLength(
+        context->GetInputDesc(0)->GetDataType(), typeBytes);
+
+    // 32B 对齐时，一个 block 里有多少个元素
+    uint32_t elementsPerBlock = BLOCK_BYTES / typeBytes;
+    elementsPerBlock = std::max(elementsPerBlock, static_cast<uint32_t>(1));
+
+    // 按 32B block 数量来分 core
+    uint32_t totalBlockNum = DivCeil(totalDataNum, elementsPerBlock);
+
+    uint32_t usedCoreNum = std::min(maxCoreNum, totalBlockNum);
+    usedCoreNum = std::max(usedCoreNum, static_cast<uint32_t>(1));
+
+    context->SetBlockDim(usedCoreNum);
+
+    uint64_t ubSize = 0;
+    platformInfo.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
+
+    // UB 中需要：
+    // 输入 xLocal: typeBytes
+    // 输出 yLocal: typeBytes
+    // xFloat: float
+    // calcFloat: float
+    uint32_t bytesPerElementInUb =
+        typeBytes + typeBytes + 2 * sizeof(float);
+
+    uint32_t tileDataNum =
+        static_cast<uint32_t>(ubSize / bytesPerElementInUb);
+
+    tileDataNum = RoundDown(tileDataNum, elementsPerBlock);
+    tileDataNum = std::max(tileDataNum, elementsPerBlock);
+
+    // block 级别平均分给各个 core
+    uint32_t blockNumPerSmallCore = totalBlockNum / usedCoreNum;
+    uint32_t bigCoreNum = totalBlockNum % usedCoreNum;
+
+    uint32_t smallCoreDataNum = blockNumPerSmallCore * elementsPerBlock;
+    uint32_t bigCoreDataNum = (blockNumPerSmallCore + 1) * elementsPerBlock;
+
+    uint32_t smallCoreTileNum = DivCeil(smallCoreDataNum, tileDataNum);
+    uint32_t bigCoreTileNum = DivCeil(bigCoreDataNum, tileDataNum);
+
+    uint32_t smallCoreTailDataNum =
+        smallCoreDataNum - (smallCoreTileNum - 1) * tileDataNum;
+
+    uint32_t bigCoreTailDataNum =
+        bigCoreDataNum - (bigCoreTileNum - 1) * tileDataNum;
+
+    LogSigmoidCustomTilingData* tiling =
+        context->GetTilingData<LogSigmoidCustomTilingData>();
+
+    tiling->totalDataNum = totalDataNum;
+    tiling->smallCoreDataNum = smallCoreDataNum;
+    tiling->bigCoreDataNum = bigCoreDataNum;
+    tiling->bigCoreNum = bigCoreNum;
+    tiling->smallCoreTileNum = smallCoreTileNum;
+    tiling->bigCoreTileNum = bigCoreTileNum;
+    tiling->tileDataNum = tileDataNum;
+    tiling->smallCoreTailDataNum = smallCoreTailDataNum;
+    tiling->bigCoreTailDataNum = bigCoreTailDataNum;
+
+    size_t* workspace = context->GetWorkspaceSizes(1);
+    workspace[0] = 0;
+
+    return ge::GRAPH_SUCCESS;
+}
+}  // namespace optiling
+
+
+namespace ge {
+static ge::graphStatus InferShape(gert::InferShapeContext* context)
+{
+    const gert::Shape* xShape = context->GetInputShape(0);
+    gert::Shape* yShape = context->GetOutputShape(0);
+
+    *yShape = *xShape;
+    return GRAPH_SUCCESS;
+}
+
+static ge::graphStatus InferDataType(gert::InferDataTypeContext* context)
+{
+    const auto inputType = context->GetInputDataType(0);
+    context->SetOutputDataType(0, inputType);
+
+    return GRAPH_SUCCESS;
+}
+}  // namespace ge
+
+
+namespace ops {
+class LogSigmoidCustom : public OpDef {
+public:
+    explicit LogSigmoidCustom(const char* name) : OpDef(name)
+    {
+        this->Input("x")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16})
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
+
+        this->Output("y")
+            .ParamType(REQUIRED)
+            .DataType({ge::DT_FLOAT16, ge::DT_FLOAT, ge::DT_BF16})
+            .Format({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND})
+            .UnknownShapeFormat({ge::FORMAT_ND, ge::FORMAT_ND, ge::FORMAT_ND});
+
+        this->SetInferShape(ge::InferShape)
+            .SetInferDataType(ge::InferDataType);
+
+        this->AICore().SetTiling(optiling::TilingFunc);
+        this->AICore().AddConfig("ascend910b");
+    }
+};
+
+OP_ADD(LogSigmoidCustom);
+}  // namespace ops
