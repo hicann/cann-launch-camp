@@ -12,4 +12,6 @@ struct FastGeluTilingData {
     uint32_t bigTailDataNum;
     uint32_t smallTailDataNum;
     uint32_t tailBlockNum;
+    uint32_t totalLength;    // 总元素数：小 kernel 单发时的搬运/计算长度
+    uint32_t isSmallShape;   // 1 = 单核单发小 kernel；0 = 多核流水大 kernel
 };
