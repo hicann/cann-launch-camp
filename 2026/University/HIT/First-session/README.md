@@ -6,7 +6,7 @@
 
 本次实践综合了启航营的所有学习内容，以Qwen3-8B在昇腾NPU上的推理优化为主线，从量化Qwen3-8B展开需求分析，开发自定义A8W8量化matmul算子并接入模型验证，实现需求分析——算子开发——单算子测试——测试驱动优化——算子接入模型测试的完整开发链路。
 
-完整实践内容可见[自定义量化 A8W8 matmul 算子开发并接入 Qwen3-8B](https://gitcode.com/cann/cann-learning-hub/blob/master/reference_practice/model_inference_optimization/qwen3_8b/06_custom_matmul_operator_development_and_integration_with_qwen3_8b.ipynb)
+完整实践内容可见[自定义量化 A8W8 matmul 算子开发并接入 Qwen3-8B](https://gitcode.com/cann/cann-learning-hub/blob/master/tutorials/llm_inference/qwen3_8b/06_custom_matmul_operator_development_and_integration_with_qwen3_8b.ipynb)
 
 ## 环境准备
 
