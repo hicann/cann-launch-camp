@@ -1,0 +1,21 @@
+[
+    {
+        "op": "Gelu",
+        "input_desc": [
+            {
+                "name": "input_x",
+                "param_type": "required",
+                "format": ["ND", "ND"],
+                "type": ["float16", "float32"]
+            }
+        ],
+        "output_desc": [
+            {
+                "name": "output",
+                "param_type": "required",
+                "format": ["ND", "ND"],
+                "type": ["float16", "float32"]
+            }
+        ]
+    }
+]
