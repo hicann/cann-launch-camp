@@ -1,0 +1,11 @@
+build/
+build_out/
+*.run
+*.so
+*.o
+__pycache__/
+*.py[cod]
+test/data/
+test/output/
+test/build/
+build.log
