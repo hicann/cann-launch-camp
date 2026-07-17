@@ -1,4 +1,0 @@
-code/build*/
-code/tests/__pycache__/
-*.pyc
-allnight_runs/

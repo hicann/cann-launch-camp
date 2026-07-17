@@ -1,9 +1,0 @@
-build/
-__pycache__/
-*.o
-run_gelu
-run_gelu_aclnn
-test_npu_run
-gelu_demo
-gelu_val
-build_out/

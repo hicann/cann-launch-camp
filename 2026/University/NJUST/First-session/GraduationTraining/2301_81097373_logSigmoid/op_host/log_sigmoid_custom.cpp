@@ -9,52 +9,52 @@
 namespace optiling {
 static ge::graphStatus TilingFunc(gert::TilingContext* context)
 {
-    // 1. »ñÈ¡Ó²¼þÆ½Ì¨ÐÅÏ¢
+    // 1. ï¿½ï¿½È¡Ó²ï¿½ï¿½Æ½Ì¨ï¿½ï¿½Ï¢
     auto ascendcPlatform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
     uint32_t coreNum = ascendcPlatform.GetCoreNum();
 
-    // 2. »ñÈ¡ÊäÈëÕÅÁ¿ÔªËØ×ÜÊýºÍÊý¾ÝÀàÐÍ×Ö½Ú³¤¶È
+    // 2. ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½Ú³ï¿½ï¿½ï¿½
     uint32_t inputNum = context->GetInputShape(0)->GetStorageShape().GetShapeSize();
     uint32_t typeLength = 0;
     ge::TypeUtils::GetDataTypeLength(context->GetInputDesc(0)->GetDataType(), typeLength);
 
-    // 3. 32B¶ÔÆë£¬¼ÆËã×ÜÊý¾Ý¿éÊý
+    // 3. 32Bï¿½ï¿½ï¿½ë£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½
     const uint32_t BLOCK_SIZE = 32;
     uint32_t inputLength = inputNum * typeLength;
     uint32_t inputLengthAlign32 = ((inputLength + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE;
     uint32_t totalBlockNum = inputLengthAlign32 / BLOCK_SIZE;
 
-    // 4. Êµ¼ÊÊ¹ÓÃºËÊý£¨²»³¬¹ýÊý¾Ý¿éÊý£¬ÖÁÉÙ1ºË£©
+    // 4. Êµï¿½ï¿½Ê¹ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½Ë£ï¿½
     coreNum = std::min(coreNum, totalBlockNum);
     coreNum = std::max(coreNum, static_cast<uint32_t>(1));
 
-    // 5. ºË¼äÇÐ·Ö£ºÆ½¾ù·ÖÅä£¬ÓàÊý·ÖÅä¸øÇ° tailBlockNum ¸öºË£¨´óºË£©
+    // 5. ï¿½Ë¼ï¿½ï¿½Ð·Ö£ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ä£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç° tailBlockNum ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½Ë£ï¿½
     uint32_t everyCoreInputBlockNum = totalBlockNum / coreNum;
     uint32_t tailBlockNum = totalBlockNum % coreNum;
     context->SetBlockDim(coreNum);
 
-    // 6. »ñÈ¡UB´óÐ¡
+    // 6. ï¿½ï¿½È¡UBï¿½ï¿½Ð¡
     uint64_t ubSize = 0;
     ascendcPlatform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ubSize);
 
-    // 7. ¹ÀËãµ¥´ÎTileËùÐèUB¿Õ¼ä£¨Ë«»º³å + 1¸öfloatÁÙÊ±Çø£©
+    // 7. ï¿½ï¿½ï¿½ãµ¥ï¿½ï¿½Tileï¿½ï¿½ï¿½ï¿½UBï¿½Õ¼ä£¨Ë«ï¿½ï¿½ï¿½ï¿½ + 1ï¿½ï¿½floatï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
     const uint32_t BUFFER_NUM = 2;
     const uint32_t QUEUE_COUNT = 2;      // input x + output y
-    const uint32_t TMP_FLOAT_COUNT = 1;  // ½öÐè1¸öfloatÁÙÊ±buffer
+    const uint32_t TMP_FLOAT_COUNT = 1;  // ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½floatï¿½ï¿½Ê±buffer
     uint32_t bytesPerElementInUb =
         QUEUE_COUNT * BUFFER_NUM * typeLength + TMP_FLOAT_COUNT * sizeof(float);
 
-    // 8. ¼ÆËãÃ¿´ÎTile´¦ÀíµÄ×î´óÔªËØÊý£¨°´32B¶ÔÆë£©
+    // 8. ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½Tileï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½32Bï¿½ï¿½ï¿½ë£©
     uint32_t maxElementsByUb = static_cast<uint32_t>(ubSize / bytesPerElementInUb);
     uint32_t elementsPerBlock = BLOCK_SIZE / typeLength;
     uint32_t tileDataNum = (maxElementsByUb / elementsPerBlock) * elementsPerBlock;
     tileDataNum = std::max(tileDataNum, elementsPerBlock);
 
-    // 9. ¼ÆËãTile¶ÔÓ¦µÄ32B¿éÊý
+    // 9. ï¿½ï¿½ï¿½ï¿½Tileï¿½ï¿½Ó¦ï¿½ï¿½32Bï¿½ï¿½ï¿½ï¿½
     uint32_t tileBlockNum = tileDataNum * typeLength / BLOCK_SIZE;
     tileBlockNum = std::max(tileBlockNum, static_cast<uint32_t>(1));
 
-    // 10. ¼ÆËãÐ¡ºË£¨ÎÞÓàÊý£©µÄ´¦Àí¹æÄ£
+    // 10. ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Ä£
     uint32_t smallCoreDataNum = everyCoreInputBlockNum * BLOCK_SIZE / typeLength;
     uint32_t smallTileNum = everyCoreInputBlockNum / tileBlockNum;
     uint32_t finalSmallTileNum =
@@ -63,7 +63,7 @@ static ge::graphStatus TilingFunc(gert::TilingContext* context)
     uint32_t smallTailDataNum = smallCoreDataNum - tileDataNum * smallTileNum;
     smallTailDataNum = smallTailDataNum == 0 ? tileDataNum : smallTailDataNum;
 
-    // 11. ¼ÆËã´óºË£¨ÓÐÓàÊý£©µÄ´¦Àí¹æÄ£
+    // 11. ï¿½ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½Ä£
     everyCoreInputBlockNum += 1;
     uint32_t bigCoreDataNum = everyCoreInputBlockNum * BLOCK_SIZE / typeLength;
     uint32_t bigTileNum = everyCoreInputBlockNum / tileBlockNum;
@@ -73,7 +73,7 @@ static ge::graphStatus TilingFunc(gert::TilingContext* context)
     uint32_t bigTailDataNum = bigCoreDataNum - tileDataNum * bigTileNum;
     bigTailDataNum = bigTailDataNum == 0 ? tileDataNum : bigTailDataNum;
 
-    // 12. Ìî³äTiling½á¹¹Ìå
+    // 12. ï¿½ï¿½ï¿½Tilingï¿½á¹¹ï¿½ï¿½
     LogSigmoidCustomTilingData *tiling = context->GetTilingData<LogSigmoidCustomTilingData>();
     tiling->smallCoreDataNum = smallCoreDataNum;
     tiling->bigCoreDataNum = bigCoreDataNum;
