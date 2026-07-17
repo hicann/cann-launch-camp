@@ -1,0 +1,30 @@
+{
+  "test_cases": [
+    {
+      "name": "tiny",
+      "n": 128,
+      "dtype": "float32"
+    },
+    {
+      "name": "small",
+      "n": 2048,
+      "dtype": "float32"
+    },
+    {
+      "name": "medium",
+      "n": 8192,
+      "dtype": "float16"
+    },
+    {
+      "name": "large",
+      "n": 65536,
+      "dtype": "float32"
+    },
+    {
+      "name": "huge",
+      "n": 262144,
+      "dtype": "float16"
+    }
+  ],
+  "date": "2026-07-05"
+}

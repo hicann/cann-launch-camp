@@ -1,0 +1,33 @@
+{
+    "kernel_name": "Gelu_f5fab30ba526d74aff03e6498ad42e59_0",
+    "kernel_path": "/opt/atomgit/GELU/build_out/op_kernel/ascendc_kernels/binary/ascend910b/gelu/Gelu_f5fab30ba526d74aff03e6498ad42e59.o",
+    "blockdim": 24,
+    "mode": "ca",
+    "device_id": 0,
+    "magic": "RT_DEV_BINARY_MAGIC_ELF_AIVEC",
+    "test_cases": [
+        {
+            "case_name": "Gelu_f32_large",
+            "param_desc": [
+                {
+                    "param_type": "input",
+                    "type": "float32",
+                    "shape": [65536],
+                    "data_path": "/opt/atomgit/GELU/prof_data/input_f32_65536.bin",
+                    "name": "input_x"
+                },
+                {
+                    "param_type": "output",
+                    "type": "float32",
+                    "shape": [65536],
+                    "name": "output"
+                },
+                {
+                    "param_type": "tiling",
+                    "tiling_data_size": 44,
+                    "tiling_data_path": "/opt/atomgit/GELU/prof_data/tiling_f32_65536.bin"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,74 @@
+[
+    {
+        "kernel_name": "Gelu_f5fab30ba526d74aff03e6498ad42e59",
+        "kernel_path": "/opt/atomgit/GELU/build_out/op_kernel/ascendc_kernels/binary/ascend910b/gelu/Gelu_f5fab30ba526d74aff03e6498ad42e59.o",
+        "blockdim": 24,
+        "mode": "ca",
+        "device_id": 0,
+        "magic": "RT_DEV_BINARY_MAGIC_ELF_AIVEC",
+        "test_cases": [
+            {
+                "case_name": "Gelu_float32_large",
+                "param_desc": [
+                    {
+                        "param_type": "input",
+                        "type": "float32",
+                        "shape": [65536],
+                        "data_path": "null",
+                        "name": "input_x"
+                    },
+                    {
+                        "param_type": "output",
+                        "type": "float32",
+                        "shape": [65536],
+                        "name": "output"
+                    },
+                    {
+                        "param_type": "workspace",
+                        "user_workspace_size": 0
+                    },
+                    {
+                        "param_type": "tiling",
+                        "tiling_data_size": 44
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "kernel_name": "Gelu_3053039696601b951e682c54d1c15c62",
+        "kernel_path": "/opt/atomgit/GELU/build_out/op_kernel/ascendc_kernels/binary/ascend910b/gelu/Gelu_3053039696601b951e682c54d1c15c62.o",
+        "blockdim": 24,
+        "mode": "ca",
+        "device_id": 0,
+        "magic": "RT_DEV_BINARY_MAGIC_ELF_AIVEC",
+        "test_cases": [
+            {
+                "case_name": "Gelu_float16_medium",
+                "param_desc": [
+                    {
+                        "param_type": "input",
+                        "type": "float16",
+                        "shape": [8192],
+                        "data_path": "null",
+                        "name": "input_x"
+                    },
+                    {
+                        "param_type": "output",
+                        "type": "float16",
+                        "shape": [8192],
+                        "name": "output"
+                    },
+                    {
+                        "param_type": "workspace",
+                        "user_workspace_size": 0
+                    },
+                    {
+                        "param_type": "tiling",
+                        "tiling_data_size": 44
+                    }
+                ]
+            }
+        ]
+    }
+]
