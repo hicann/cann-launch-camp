@@ -11,6 +11,7 @@
 ## 环境准备
 
 详细操作步骤请参考[环境准备指南](./prepare_env_guide.md)，简要流程：
+
 1. 创建CANNLab云开发环境并安装依赖
 2. 启动Jupyter Server并复制terminal中打印出来的完整URL
 3. 打开VSCode中的ipynb文件，点击`选择内核`、`现有Jupyter服务器`
@@ -26,8 +27,9 @@
    - 算子功能测试通过；
    - 性能数据收集成功。
 3. **文件命名**：`gitcode账号_result.ipynb`。
-4. **允许并且鼓励**使用 AI 工具辅助，但须独立思考并在报告中简述（解决了什么疑惑、是否引入新 bug）。
-5. **不得抄袭。**
+4. 需要将实现的自定义算子在[CANNJudge](https://cannjudge.cn/hit/20260721/qmmcustom)上进行提交
+5. **允许并且鼓励**使用 AI 工具辅助，但须独立思考并在报告中简述（解决了什么疑惑、是否引入新 bug）。
+6. **不得抄袭。**
 
 ## 提交目录结构
 
@@ -37,6 +39,7 @@
 `{gitcode账号}_result`
 
 **个人目录下的提交内容包括**：
+
 - 个人notebook结果：{gitcode账号}_result.ipynb
 - 个人实现的自定义算子文件：{gitcode账号}_qmm_custom.asc
 - 个人实践报告：{gitcode账号}_report.md
@@ -44,6 +47,7 @@
 其中个人实践报告的模板可以参考[实践报告模板](./report_template.md)
 
 整体目录结构如下：
+
 ```
 First-session/
 ├── README.md
@@ -67,10 +71,11 @@ First-session/
 3. 完成内容编写与自检
 4. 提交 PR 等待审核
 
-
 ## 评分标准总览
 
 > **实践任务**：本次实践共包含 6 个任务，其中任务一至任务三为算子核心实现（Tiling 设计、Cube-only Kernel、Cube+Vector Kernel），任务四为算子编译，任务五为单算子功能与性能测试，任务六为算子接入模型测试。任务之间存在依赖关系，需按顺序完成。
+
+> **CANNJudge提交**： 实现的自定义算子需要在[CANNJudge](https://cannjudge.cn/hit/20260721/qmmcustom)上进行提交，单算子功能性能验收以CANNJudge结果为准；notebook中实现的算子以核函数直调的形式组织，在CANNJudge上提交的算子以自定义算子工程的形式组织，算子实现逻辑是一致的，需自行调整结构。
 
 <table>
   <tr>
@@ -81,7 +86,7 @@ First-session/
   <tr>
     <td>功能正确性-单算子</td>
     <td>15分</td>
-    <td>共24条用例，全通过为满分，部分通过按比例给分</td>
+    <td>以CANNJudge结果为准，共24条用例，全通过为满分，部分通过按比例给分</td>
   </tr>
   <tr>
     <td>功能正确性-网络</td>
@@ -91,12 +96,12 @@ First-session/
   <tr>
     <td>性能-单算子</td>
     <td>5分</td>
-    <td>按性能排名从高到低给分</td>
+    <td>以CANNJudge结果为准，按性能排名从高到低给分</td>
   </tr>
   <tr>
     <td>性能-网络</td>
     <td>5分</td>
-    <td>比非量化模型平均推理耗时短即为满分</td>
+    <td>平均推理耗时低于100ms即为满分</td>
   </tr>
   <tr>
     <td rowspan="3">答辩</td>
@@ -112,8 +117,8 @@ First-session/
 </table>
 
 > 性能分须先通过算子功能验证（未通过则性能 0 分）。
-> 非量化模型平均推理的参考耗时为85ms。
 > 网络输出文本的参考结果如下：
+
 ```text
 The output of an attention function is a **weighted sum of the value vectors**, where the weights are determined by the similarity between the **query vector** and each **key vector** in the set of key-value pairs.
 
