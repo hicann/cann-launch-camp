@@ -97,7 +97,7 @@ First-session/
   <tr>
     <td>功能正确性-网络</td>
     <td>5分</td>
-    <td>自定义算子接入后网络输出文本一致为满分，否则为0分</td>
+    <td>自定义算子接入后，网络输出符合逻辑的attention描述为满分，否则为0分</td>
   </tr>
   <tr>
     <td>性能-单算子</td>
@@ -123,6 +123,13 @@ First-session/
 </table>
 
 > 性能分须先通过算子功能验证（未通过则性能 0 分）。
+
+> 网络输入文本为：
+
+```text
+An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is
+```
+
 > 网络输出文本的参考结果如下：
 
 ```text
