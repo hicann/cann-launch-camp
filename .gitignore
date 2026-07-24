@@ -4,4 +4,4 @@ __pycache__/
 .opencode/
 .DS_Store
 *.txt
-.vscode/
+.vscode/.arts/
