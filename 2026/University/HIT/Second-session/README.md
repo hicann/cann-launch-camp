@@ -27,8 +27,8 @@
    - 自定义算子编译成功；
    - 算子功能测试通过；
    - 性能数据收集成功。
-4. **个人标识与文件命名**：统一使用课程登记的本人标识（例如英文昵称、学号或姓名拼音）作为 `{个人标识}`，Notebook 命名为 `{个人标识}_result.ipynb`。
-5. 每人需要将实现的自定义算子在[CANNJudge](https://cannjudge.cn/hit/20260721/qmmcustom)上提交一次，并在个人报告中记录提交账号及测试结果。
+4. **个人标识与文件命名**：统一使用课程登记的本人标识（例如英文昵称、学号或姓名拼音）作为 `{个人标识}`，Notebook 命名为 `{个人标识}_result.ipynb`。提交到`cann-launch-camp/2026/University/HIT/Second-session/submission`目录下。
+5. 每人需要将实现的自定义算子在[CANNJudge](https://cannjudge.cn/hitwh/cann/qmmcustom)上提交一次，并在个人报告中记录提交账号及测试结果。
 6. 所有提交内容须使用本人 GitCode 账号完成可追溯的有效 commit，包括算子代码、Tiling、测试、性能优化、Notebook 或报告内容；纯空提交或仅修改格式不计为有效贡献。
 7. **允许并且鼓励**使用 AI 工具辅助，但仍须独立思考，并在报告中简述 AI 工具解决了什么疑惑、是否引入新 bug，以及本人如何完成验证。
 8. **不得抄袭**：作业须独立完成，严禁抄袭他人成果或与他人共用实质相同的提交内容。**一经发现抄袭，本次作业成绩记零分**，情节严重者取消后续评优资格。
@@ -77,7 +77,7 @@ Second-session/
 
 > **实践任务**：本次实践共包含 6 个任务，其中任务一至任务三为算子核心实现（Tiling 设计、Cube-only Kernel、Cube+Vector Kernel），任务四为算子编译，任务五为单算子功能与性能测试，任务六为算子接入模型测试。任务之间存在依赖关系，需按顺序完成。
 
-> **CANNJudge提交**： 实现的自定义算子需要在[CANNJudge](https://cannjudge.cn/hitwh/cann/qmmcustom) 上进行提交，单算子功能性能验收以CANNJudge结果为准；notebook中实现的算子以核函数直调的形式组织，在CANNJudge上提交的算子以自定义算子工程的形式组织，算子实现逻辑是一致的，需自行调整结构。
+> **CANNJudge提交**： 实现的自定义算子需要在[CANNJudge](https://cannjudge.cn/hitwh/cann/qmmcustom) 上进行提交，单算子功能性能验收以CANNJudge结果为准。
 
 <table>
   <tr>
